@@ -1,0 +1,87 @@
+name: Deploy Function
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: "Environment to deploy"
+        required: true
+        type: string
+      project_id:
+        description: "project to deploy"
+        required: true
+        type: string
+      dag_path_origin:
+        description: "Path where the dag is stored"
+        required: true
+        type: string
+        default: "./app/net/prueba"
+      dag_name:
+        description: "Dag name"
+        required: true
+        type: string
+      dag_name_py:
+        description: "Dag name py local"
+        required: true
+        type: string
+      folder_dag:
+        description: "path folder dag"
+        required: true
+        type: string
+        default: "dags"
+      bucket_dag:
+        description: "name bucket for Dags , only name bucket"
+        required: true
+        type: string
+
+    secrets:
+      DIG_READER_GITHUB_ACCESS_TOKEN:
+        required: true
+      DIG_READER_GITHUB_USER:
+        required: true
+      GCP_IDENTITY_PROVIDER:
+        required: true
+      GCP_SERVICE_ACCOUNT:
+        required: true
+        description: "GCP Service Account for Configure GCP Credentials"
+
+jobs:
+  setup-build-publish-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    environment: ${{ inputs.environment }}
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        token: ${{secrets.DIG_READER_GITHUB_ACCESS_TOKEN}}
+
+    - name: Configure Git permissions
+      run: |
+        git config --local --remove-section http."https://github.com/"
+        git config --global url."https://${GH_USER}:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
+      env:
+        GH_USER: ${{ secrets.DIG_READER_GITHUB_USER }}
+        GH_TOKEN: ${{ secrets.DIG_READER_GITHUB_ACCESS_TOKEN }}
+
+    - name: Set up Cloud SDK
+      uses: google-github-actions/auth@v2
+      with:
+        project_id: ${{ inputs.project_id }}
+        workload_identity_provider: ${{ secrets.GCP_IDENTITY_PROVIDER }}
+        service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+    - name: Temporary Folder
+      run: mkdir ${{ inputs.folder_dag }}
+    - name: "Copy DAG"
+      run: cp ${{ inputs.dag_path_origin }}/${{ inputs.dag_name_py }} ./${{ inputs.folder_dag }}/${{ inputs.dag_name }}
+
+    - name: Load File
+      id: 'upload-files'
+      uses: 'google-github-actions/upload-cloud-storage@v1'
+      with:
+        path: '${{ inputs.folder_dag }}/'
+        destination: '${{ inputs.bucket_dag }}/'
