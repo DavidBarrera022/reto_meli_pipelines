@@ -8,7 +8,7 @@ on:
         required: true
         type: string
       project_id:
-        description: "project to deploy"
+        description: "Project to deploy"
         required: true
         type: string
       dag_path_origin:
@@ -25,12 +25,12 @@ on:
         required: true
         type: string
       folder_dag:
-        description: "path folder dag"
+        description: "Path folder dag"
         required: true
         type: string
         default: "dags"
       bucket_dag:
-        description: "name bucket for Dags , only name bucket"
+        description: "Name of the bucket for Dags, only bucket name"
         required: true
         type: string
 
@@ -57,7 +57,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
       with:
-        token: ${{secrets.DIG_READER_GITHUB_ACCESS_TOKEN}}
+        token: ${{ secrets.DIG_READER_GITHUB_ACCESS_TOKEN }}
 
     - name: Configure Git permissions
       run: |
@@ -71,11 +71,12 @@ jobs:
       uses: google-github-actions/auth@v2
       with:
         project_id: ${{ inputs.project_id }}
-        workload_identity_provider: //iam.googleapis.com/projects/218251446413/locations/global/workloadIdentityPools/github-pool-1/providers/github-provider
+        workload_identity_provider: projects/218251446413/locations/global/workloadIdentityPools/github-pool-1
         service_account: prueba-pipeline-git@scenic-era-450314-f4.iam.gserviceaccount.com
 
     - name: Temporary Folder
       run: mkdir ${{ inputs.folder_dag }}
+      
     - name: "Copy DAG"
       run: cp ${{ inputs.dag_path_origin }}/${{ inputs.dag_name_py }} ./${{ inputs.folder_dag }}/${{ inputs.dag_name }}
 
