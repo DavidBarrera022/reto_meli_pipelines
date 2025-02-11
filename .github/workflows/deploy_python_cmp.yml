@@ -71,7 +71,7 @@ jobs:
       uses: google-github-actions/auth@v2
       with:
         project_id: ${{ inputs.project_id }}
-        workload_identity_provider: projects/218251446413/locations/global/workloadIdentityPools/github-pool-1
+        workload_identity_provider: projects/218251446413/locations/global/workloadIdentityPools/github-pool-1/providers/github-provider
         service_account: prueba-pipeline-git@scenic-era-450314-f4.iam.gserviceaccount.com
 
     - name: Temporary Folder
